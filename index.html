@@ -377,6 +377,37 @@
   }
   .kg-frame{width:100%; display:block; border:0;}
 
+  /* ---------------- Embed raidstrats.gg (plein écran + zoom) ---------------- */
+  #raid-boss-embed-wrap{
+    position:relative; overflow:hidden;
+    height:min(84vh, 900px);
+  }
+  #raid-boss-embed-wrap .kg-frame{
+    width:100%; height:100%;
+    transform:scale(1.22); transform-origin:center center;
+  }
+  #raid-boss-embed-wrap:fullscreen,
+  #raid-boss-embed-wrap:-webkit-full-screen{
+    height:100vh;
+  }
+  #raid-boss-embed-wrap:fullscreen .kg-frame,
+  #raid-boss-embed-wrap:-webkit-full-screen .kg-frame{
+    transform:scale(1.05);
+  }
+  @media (max-width:640px){
+    #raid-boss-embed-wrap{height:60vh;}
+    #raid-boss-embed-wrap .kg-frame{transform:scale(1.1);}
+  }
+  .embed-fullscreen-btn{
+    position:absolute; top:.7rem; right:.7rem; z-index:2;
+    width:38px; height:38px; display:flex; align-items:center; justify-content:center;
+    background:rgba(9,11,13,.75); border:1px solid var(--line); border-radius:8px;
+    color:var(--text-dim); cursor:pointer; backdrop-filter:blur(4px);
+    transition:color .2s, border-color .2s, background .2s;
+  }
+  .embed-fullscreen-btn:hover{color:var(--accent-bright); border-color:var(--accent-dim); background:rgba(9,11,13,.92);}
+  .embed-fullscreen-btn svg{width:16px; height:16px;}
+
   /* ---------------- Export MDT ---------------- */
   .mdt-export{margin-bottom:1.4rem;}
   .mdt-toggle-btn{
@@ -691,8 +722,11 @@
       </div>
     </div>
     <p class="sec-title first">Plan raidstrats.gg</p>
-    <div class="kg-embed-wrap">
-      <iframe id="raid-boss-embed" class="kg-frame" height="760" loading="lazy" title="Plan raidstrats.gg" allowfullscreen></iframe>
+    <div class="kg-embed-wrap" id="raid-boss-embed-wrap">
+      <iframe id="raid-boss-embed" class="kg-frame" loading="lazy" title="Plan raidstrats.gg" allow="fullscreen" allowfullscreen></iframe>
+      <button class="embed-fullscreen-btn" type="button" onclick="toggleRaidEmbedFullscreen()" title="Plein écran">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/></svg>
+      </button>
     </div>
     <p class="panel-note">Le plan ne s'affiche pas ? <a id="raid-boss-fallback" href="#" target="_blank" rel="noopener">ouvre-le directement sur raidstrats.gg ↗</a></p>
   </div>
@@ -1816,6 +1850,16 @@
     document.getElementById('raid-boss-fallback').href = b.planner;
     return true;
   }
+
+  function toggleRaidEmbedFullscreen(){
+    const wrap = document.getElementById('raid-boss-embed-wrap');
+    if(document.fullscreenElement){
+      document.exitFullscreen();
+    } else if(wrap.requestFullscreen){
+      wrap.requestFullscreen();
+    }
+  }
+  window.toggleRaidEmbedFullscreen = toggleRaidEmbedFullscreen;
 
   renderRaidRoster();
   renderRaidBossGrid();

@@ -87,7 +87,7 @@
     display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, max-content));
     gap:.7rem; margin-top:2rem;
   }
-  .season-meta span{
+  .season-meta span, .rwf-badge{
     display:flex; flex-direction:column; gap:.2rem;
     border:1px solid var(--line); border-radius:10px;
     background:linear-gradient(160deg, var(--panel), var(--bg-2));
@@ -95,9 +95,57 @@
     font-family:'JetBrains Mono', monospace; font-size:.66rem;
     letter-spacing:.16em; text-transform:uppercase; color:var(--text-mute);
   }
-  .season-meta strong{
+  .season-meta strong, .rwf-badge strong{
     color:var(--text); font-family:'Barlow Condensed', sans-serif;
     font-size:1.3rem; font-weight:700; letter-spacing:.02em; text-transform:none;
+  }
+  .rwf-badge{
+    cursor:pointer; text-align:left; appearance:none;
+    border-color:color-mix(in srgb, var(--midnight) 45%, var(--line));
+    transition:transform .2s, border-color .2s, box-shadow .2s;
+  }
+  .rwf-badge:hover{
+    transform:translateY(-2px);
+    border-color:var(--midnight);
+    box-shadow:0 10px 24px rgba(139,111,240,.28);
+  }
+  .rwf-badge:focus-visible{outline:2px solid var(--accent-bright); outline-offset:3px;}
+  .rwf-badge .live-dot{
+    display:inline-block; width:6px; height:6px; border-radius:50%;
+    background:#ff4d4d; margin-right:.45em; vertical-align:middle;
+    box-shadow:0 0 0 3px rgba(255,77,77,.18);
+  }
+
+  /* ---------------- Vue RWF (streams) ---------------- */
+  #view-rwf.hidden{display:none;}
+  #view-rwf{max-width:960px; margin:0 auto;}
+  .rwf-tabs{display:flex; gap:.6rem; flex-wrap:wrap; margin:1.6rem 0 1.5rem;}
+  .rwf-tab{
+    cursor:pointer; font-family:'JetBrains Mono', monospace; font-size:.72rem;
+    letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim);
+    border:1px solid var(--line); border-radius:100px; padding:.6rem 1.15rem;
+    background:var(--panel); transition:color .2s, border-color .2s, background .2s;
+  }
+  .rwf-tab:hover{color:var(--text);}
+  .rwf-tab.active{
+    color:var(--midnight); border-color:var(--midnight);
+    background:color-mix(in srgb, var(--midnight) 12%, var(--panel));
+  }
+  .rwf-streams{display:flex; flex-direction:column; gap:1rem;}
+  .rwf-stream-frame{
+    position:relative; width:100%; aspect-ratio:16/9;
+    border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;
+    background:#000;
+  }
+  .rwf-stream-frame iframe{width:100%; height:100%; border:0; display:block;}
+  .rwf-stream-label{
+    font-family:'JetBrains Mono', monospace; font-size:.64rem;
+    letter-spacing:.16em; text-transform:uppercase; color:var(--text-mute);
+    margin-bottom:.5rem;
+  }
+  .rwf-note{
+    margin-top:1.2rem; font-family:'JetBrains Mono', monospace; font-size:.66rem;
+    letter-spacing:.05em; color:var(--text-mute); line-height:1.7;
   }
 
   main{padding:3.4rem 6vw 5rem; max-width:1180px; margin:0 auto;}
@@ -455,6 +503,10 @@
       <span>Début de saison <strong>19 août 2026</strong></span>
       <span>Donjons <strong>8</strong></span>
       <span>Rotation <strong>5 Midnight · 3 anciens</strong></span>
+      <button class="rwf-badge" type="button" onclick="location.hash='rwf'">
+        <span><span class="live-dot"></span>Suivre en direct</span>
+        <strong>RWF</strong>
+      </button>
     </div>
   </div>
 </header>
@@ -482,6 +534,21 @@
     </div>
     <div class="detail-tabs" id="detail-tabs"></div>
     <div id="detail-panels"></div>
+  </div>
+
+  <div id="view-rwf" class="hidden">
+    <button class="detail-back" id="rwf-back" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      Retour aux donjons
+    </button>
+    <p class="grid-label">RWF — Race World First</p>
+    <div class="rwf-tabs">
+      <button class="rwf-tab active" type="button" data-mode="echo">Echo POV</button>
+      <button class="rwf-tab" type="button" data-mode="limit">Limit POV</button>
+      <button class="rwf-tab" type="button" data-mode="double">Double POV</button>
+    </div>
+    <div class="rwf-streams" id="rwf-streams"></div>
+    <p class="rwf-note">Les flux Twitch ne se chargent que depuis un site hébergé (http/https) — pas depuis un fichier ouvert en local, Twitch bloque le paramètre "parent" dans ce cas. Une fois le fichier mis en ligne (ou lancé via un petit serveur local), les vidéos s'affichent normalement.</p>
   </div>
 </main>
 
@@ -1326,6 +1393,10 @@
   const grid = document.getElementById('dungeon-grid');
   const viewGrid = document.getElementById('view-grid');
   const viewDetail = document.getElementById('view-detail');
+  const viewRWF = document.getElementById('view-rwf');
+  const rwfStreams = document.getElementById('rwf-streams');
+  const rwfTabs = document.querySelectorAll('.rwf-tab');
+  const rwfBack = document.getElementById('rwf-back');
   const detailHero = document.getElementById('detail-hero');
   const detailArt = document.getElementById('detail-art');
   const detailMeta = document.getElementById('detail-meta');
@@ -1415,12 +1486,14 @@
 
   function showGrid(){
     viewDetail.classList.add('hidden');
+    viewRWF.classList.add('hidden');
     viewGrid.classList.remove('hidden');
   }
 
   function showDetail(slug){
     if(renderDetail(slug)){
       viewGrid.classList.add('hidden');
+      viewRWF.classList.add('hidden');
       viewDetail.classList.remove('hidden');
       viewDetail.scrollIntoView({ block: 'start' });
     } else {
@@ -1428,12 +1501,55 @@
     }
   }
 
+  // --- Vue RWF : Echo POV / Limit POV / Double POV ---
+  const TWITCH_CHANNELS = { echo: 'echo_esports', limit: 'maximum' };
+
+  function twitchEmbedSrc(channel){
+    const parent = location.hostname || 'localhost';
+    return 'https://player.twitch.tv/?channel=' + channel + '&parent=' + parent + '&muted=false';
+  }
+
+  function renderRWF(mode){
+    rwfTabs.forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+    if(mode === 'double'){
+      rwfStreams.className = 'rwf-streams double';
+      rwfStreams.innerHTML = `
+        <div>
+          <div class="rwf-stream-label">Echo POV</div>
+          <div class="rwf-stream-frame"><iframe src="${twitchEmbedSrc(TWITCH_CHANNELS.echo)}" allowfullscreen></iframe></div>
+        </div>
+        <div>
+          <div class="rwf-stream-label">Limit POV</div>
+          <div class="rwf-stream-frame"><iframe src="${twitchEmbedSrc(TWITCH_CHANNELS.limit)}" allowfullscreen></iframe></div>
+        </div>`;
+    } else {
+      const channel = TWITCH_CHANNELS[mode] || TWITCH_CHANNELS.echo;
+      rwfStreams.className = 'rwf-streams';
+      rwfStreams.innerHTML = `<div class="rwf-stream-frame"><iframe src="${twitchEmbedSrc(channel)}" allowfullscreen></iframe></div>`;
+    }
+  }
+
+  rwfTabs.forEach(tab => {
+    tab.addEventListener('click', () => renderRWF(tab.dataset.mode));
+  });
+
+  function showRWF(){
+    viewGrid.classList.add('hidden');
+    viewDetail.classList.add('hidden');
+    viewRWF.classList.remove('hidden');
+    renderRWF('echo');
+    viewRWF.scrollIntoView({ block: 'start' });
+  }
+
   function route(){
     const slug = location.hash.replace('#', '');
-    if(slug) showDetail(slug); else showGrid();
+    if(slug === 'rwf') showRWF();
+    else if(slug) showDetail(slug);
+    else showGrid();
   }
 
   backBtn.addEventListener('click', () => { location.hash = ''; });
+  rwfBack.addEventListener('click', () => { location.hash = ''; });
   window.addEventListener('hashchange', route);
   route();
 

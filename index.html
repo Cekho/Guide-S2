@@ -59,11 +59,12 @@
     border-bottom:1px solid var(--line);
   }
   .brand-logo{
-    position:absolute; top:1.8rem; right:6vw; z-index:2;
-    width:190px; height:auto; pointer-events:none;
-    filter:drop-shadow(0 6px 16px rgba(0,0,0,.5));
+    position:absolute; top:50%; right:5vw; z-index:2;
+    transform:translateY(-50%);
+    width:min(30vw, 340px); height:auto; pointer-events:none;
+    filter:drop-shadow(0 8px 20px rgba(0,0,0,.5));
   }
-  @media (max-width:860px){ .brand-logo{display:none;} }
+  @media (max-width:1100px){ .brand-logo{display:none;} }
 
   /* ---------------- Intro splash ---------------- */
   #intro-splash{
@@ -101,7 +102,9 @@
   }
   #intro-letter-s{transform:translate(-260px,-40px) rotate(-50deg);}
   #intro-letter-m{transform:translate(260px,-40px) rotate(50deg);}
-  .intro-letter.intro-landed{opacity:1; transform:translate(0,0) rotate(0deg);}
+  .intro-letter.intro-landed{opacity:1;}
+  #intro-letter-s.intro-landed{transform:translate(0,0) rotate(0deg);}
+  #intro-letter-m.intro-landed{transform:translate(0,0) rotate(0deg);}
   #intro-skip{
     position:absolute; bottom:2.2rem; left:0; right:0; text-align:center;
     font-family:'JetBrains Mono', monospace; font-size:.68rem; letter-spacing:.16em; text-transform:uppercase;
@@ -788,15 +791,22 @@
 
   splash.addEventListener('click', finish);
 
-  schedule(function(){ shape.classList.add('intro-landed'); }, 80);
-  schedule(function(){ clank({freq:110, dur:.4, vol:.4}); shake(); }, 640);
-  schedule(function(){ letterS.classList.add('intro-landed'); }, 900);
-  schedule(function(){ clank({freq:240, dur:.22, vol:.28}); shake(); }, 1280);
-  schedule(function(){ letterM.classList.add('intro-landed'); }, 1400);
-  schedule(function(){ clank({freq:260, dur:.22, vol:.28}); shake(); }, 1780);
-  schedule(function(){ shape.classList.add('intro-filled'); chime(); }, 1950);
-  schedule(function(){ skipHint.classList.add('intro-visible'); }, 600);
+  function safe(fn){ return function(){ try { fn(); } catch(e){} }; }
+
+  schedule(safe(function(){ shape.classList.add('intro-landed'); }), 80);
+  schedule(safe(function(){ clank({freq:110, dur:.4, vol:.4}); shake(); }), 640);
+  schedule(safe(function(){ letterS.classList.add('intro-landed'); }), 900);
+  schedule(safe(function(){ clank({freq:240, dur:.22, vol:.28}); shake(); }), 1280);
+  schedule(safe(function(){ letterM.classList.add('intro-landed'); }), 1400);
+  schedule(safe(function(){ clank({freq:260, dur:.22, vol:.28}); shake(); }), 1780);
+  schedule(safe(function(){ shape.classList.add('intro-filled'); chime(); }), 1950);
+  schedule(safe(function(){ skipHint.classList.add('intro-visible'); }), 600);
   schedule(finish, 2800);
+
+  // filet de sécurité : l'intro ne doit jamais pouvoir bloquer le site
+  setTimeout(function(){ try { finish(); } catch(e){
+    splash.style.display = 'none';
+  } }, 6000);
 })();
 </script>
 <nav class="top-nav">
@@ -883,11 +893,11 @@
 <header>
   <svg class="brand-logo" viewBox="0 0 300 90" xmlns="http://www.w3.org/2000/svg" aria-label="Symptom">
     <defs>
-      <linearGradient id="brandShieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <linearGradient id="brandShieldGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stop-color="#3ecfc0"/><stop offset="100%" stop-color="#1d514b"/>
       </linearGradient>
     </defs>
-    <polygon points="34,4 64,16 64,46 34,68 4,46 4,16" fill="url(#brandShieldGrad)" stroke="#7defdf" stroke-width="1.5"/>
+    <polygon points="34,4 64,16 64,46 34,68 4,46 4,16" fill="url(#brandShieldGrad2)" stroke="#7defdf" stroke-width="1.5"/>
     <text x="34" y="46" text-anchor="middle" font-family="'Barlow Condensed', sans-serif" font-weight="900" font-size="30" fill="#06110f">SM</text>
     <text x="82" y="46" font-family="'Barlow Condensed', sans-serif" font-weight="800" font-size="34" letter-spacing="1" fill="#3ecfc0" style="text-transform:uppercase;">SYMPTOM</text>
     <line x1="82" y1="58" x2="250" y2="58" stroke="#3ecfc0" stroke-width="2"/>
